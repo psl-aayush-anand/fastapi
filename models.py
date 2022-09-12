@@ -27,3 +27,8 @@ class Experiment(Base):
     project_id = Column(Integer, ForeignKey("projects.project_id", ondelete="CASCADE"))
 
     project = relationship("Project", back_populates="experiments")
+
+class Run(Base):
+    __tablename__ = "run"
+    erun_no = Column(Integer, primary_key=True, index=True)
+    experiment_no = Column(Integer, ForeignKey("run.experiment_no", ondelete="CASCADE"))
