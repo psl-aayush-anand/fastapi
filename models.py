@@ -30,5 +30,5 @@ class Experiment(Base):
 
 class Run(Base):
     __tablename__ = "run"
-    erun_no = Column(Integer, primary_key=True, index=True)
-    experiment_no = Column(Integer, ForeignKey("run.experiment_no", ondelete="CASCADE"))
+    run_no = Column(Integer, primary_key=True, index=True)
+    experiment_no = Column(Integer, ForeignKey("experiments.experiment_no", ondelete="CASCADE"))

@@ -1,14 +1,31 @@
 from typing import List
-
+import uvicorn
 from fastapi import Depends, FastAPI, HTTPException,Response, status
 from sqlalchemy.orm import Session
 
 import crud, models, schemas
 from database import SessionLocal, engine
 
+from fastapi.middleware.cors import CORSMiddleware
+
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
+
+
+origins = ["http://localhost:3000"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+
+
 
 
 # Dependency
@@ -64,3 +81,5 @@ def create_exp_under_project(project_id: int, experiment: schemas.ExperimentCrea
 
 
 
+if __name__ =="__main__":
+    uvicorn.run(app,host= "localhost" , port = 8000)
