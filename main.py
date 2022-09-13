@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 import crud, models, schemas
 from database import SessionLocal, engine
+import os
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -66,9 +67,6 @@ def create_exp_under_project(project_id: int, experiment: schemas.ExperimentCrea
     
     return crud.create_project_experiment(db=db, experiment=experiment, project_id=project_id)
 
-
-
-
 @app.post("/projects/", status_code=status.HTTP_201_CREATED)
 def create_project(project: schemas.ProjectCreate, experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     db_project = crud.get_project_by_name(db, name=project.project_name)
@@ -76,12 +74,37 @@ def create_project(project: schemas.ProjectCreate, experiment: schemas.Experimen
     if db_project:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"project with name {project.project_name} already exists")
     proj=  crud.create_project(db=db, project=project)
+    projname = proj.project_name
     
+    
+    #os.mkdir(dir)
     pid =  proj.project_id
     
     exp = crud.create_project_experiment(db=db, experiment=experiment, project_id=pid)
+    expname = exp.experiment_name
     
+    os.mkdir(f'projects/{projname}')
+    os.mkdir(f'projects/{projname}/{expname}')
+    
+
     return pid
+
+
+
+@app.post("/experiments/config/step1")
+def create_config_file():
+    #image classification and image segmentation
+    #pytorch or tensorflow ---- model 
+    return crud.create_config_file()
+@app.post("/experiments/config/step2/upload_model")
+def upload_model():
+    return crud.upload_model()
+@app.post("/experiments/config/step2/upload_model.py")
+def upload_model2():
+    return crud.upload_model2()
+@app.post("/experiments/config/step2/upload_data")
+def upload_model3():
+    return crud.uploadmodel3()
 
 
 
