@@ -1,3 +1,4 @@
+import http
 from typing import List
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException,Response, status
@@ -6,6 +7,8 @@ from sqlalchemy.orm import Session
 import crud, models, schemas
 from database import SessionLocal, engine
 import os
+
+from fastapi import File, UploadFile
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -63,8 +66,7 @@ def read_experiments(db: Session = Depends(get_db)):
 
 
 @app.post("/projects/{project_id}/experiments/",status_code=status.HTTP_201_CREATED, response_model=schemas.Experiment)
-def create_exp_under_project(project_id: int, experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
-    
+def create_exp_under_project(project_id: int,experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
     return crud.create_project_experiment(db=db, experiment=experiment, project_id=project_id)
 
 @app.post("/projects/", status_code=status.HTTP_201_CREATED)
@@ -73,38 +75,48 @@ def create_project(project: schemas.ProjectCreate, experiment: schemas.Experimen
     
     if db_project:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"project with name {project.project_name} already exists")
+    
     proj=  crud.create_project(db=db, project=project)
     projname = proj.project_name
-    
-    
-    #os.mkdir(dir)
+    os.mkdir(f'projects/{projname}')
     pid =  proj.project_id
     
-    exp = crud.create_project_experiment(db=db, experiment=experiment, project_id=pid)
-    expname = exp.experiment_name
-    
-    os.mkdir(f'projects/{projname}')
-    os.mkdir(f'projects/{projname}/{expname}')
-    
+    crud.create_project_experiment(db=db, experiment=experiment, project_id=pid)
 
     return pid
 
 
 
 @app.post("/experiments/config/step1")
-def create_config_file():
+def create_config_file(model_type:str, model_domain:str):
     #image classification and image segmentation
     #pytorch or tensorflow ---- model 
+    #result= .json() 
     return crud.create_config_file()
-@app.post("/experiments/config/step2/upload_model")
-def upload_model():
-    return crud.upload_model()
+
+@app.post("/experiments/config/step2/upload_model", status_code  = status.HTTP_202_ACCEPTED)
+async def upload_file1(project_name:str, experiment_name:str, uploaded_file: UploadFile = File(...)):
+    file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(uploaded_file.file.read())
+    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
+
+
 @app.post("/experiments/config/step2/upload_model.py")
-def upload_model2():
-    return crud.upload_model2()
+async def upload_file2(project_name:str, experiment_name:str, uploaded_file: UploadFile = File(...)):
+    file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(uploaded_file.file.read())
+    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
+
 @app.post("/experiments/config/step2/upload_data")
-def upload_model3():
-    return crud.uploadmodel3()
+async def upload_file3(project_name:str, experiment_name:str, uploaded_file: UploadFile = File(...)):
+    file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(uploaded_file.file.read())
+    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
+
+
 
 
 

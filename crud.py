@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 import models, schemas
 from models import Experiment
-
+import os
 
 def get_projects(db: Session):
     return db.query(models.Project).all()
@@ -34,13 +34,16 @@ def create_project_experiment(db: Session, experiment: schemas.ExperimentCreate,
     db.add(db_exp)
     db.commit()
     db.refresh(db_exp)
+    expname = db_exp.experiment_name
+    
+    projname = db.query(models.Project).filter(models.Project.project_id == project_id).first()
+    projname = projname.project_name
+    os.mkdir(f'projects/{projname}/{expname}')
+
     return db_exp
 
 
 
 
-
-
-
-def get_experiment_by_name(db: Session, name: str, project_id: int):
-    return db.query(models.Experiment).filter(models.Experiment.experiment_name == name and models.Experiment.owner_id==project_id).first()
+def create_config_file():
+    return "result"
