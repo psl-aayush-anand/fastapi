@@ -45,5 +45,3 @@ def create_project_experiment(db: Session, experiment: schemas.ExperimentCreate,
 
 
 
-def create_config_file():
-    return "result"

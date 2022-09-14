@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 import crud, models, schemas
 from database import SessionLocal, engine
 import os
+import json
 
 from fastapi import File, UploadFile
 
@@ -88,11 +89,25 @@ def create_project(project: schemas.ProjectCreate, experiment: schemas.Experimen
 
 
 @app.post("/experiments/config/step1")
-def create_config_file(model_type:str, model_domain:str):
-    #image classification and image segmentation
-    #pytorch or tensorflow ---- model 
-    #result= .json() 
-    return crud.create_config_file()
+def create_config_file(project_name:str, experiment_name:str,model_type:str, model_domain:str, db: Session = Depends(get_db)):
+    #when do you update config to true
+ 
+    dir = f'projects/{project_name}/{experiment_name}'
+    FILE = dir + '/file.json'
+    DATA = {}
+    DATA["model type"] = model_type
+    DATA["model domain"] = model_domain
+    DATA = json.dumps(DATA)
+    _ = open(FILE, mode='w+').write(DATA)
+
+
+    with open(FILE) as file:
+        result = json.load(file)
+
+    
+
+    #store FILE to db config path
+    return "configured"
 
 @app.post("/experiments/config/step2/upload_model", status_code  = status.HTTP_202_ACCEPTED)
 async def upload_file1(project_name:str, experiment_name:str, uploaded_file: UploadFile = File(...)):
