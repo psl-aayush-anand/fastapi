@@ -87,11 +87,15 @@ def create_project(project: schemas.ProjectCreate, experiment: schemas.Experimen
     return pid
 
 
-
-@app.post("/experiments/config/step1")
-def create_config_file(project_name:str, experiment_name:str,model_type:str, model_domain:str, db: Session = Depends(get_db)):
+@app.put("/experiments/config/step1")
+def create_config_file(project_id:int,expno:int,model_type:str, model_domain:str, db: Session = Depends(get_db)):
     #when do you update config to true
- 
+    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == expno).first()
+    experiment_name = experiment_name.experiment_name
+
+    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
+    project_name = project_name.project_name
+
     dir = f'projects/{project_name}/{experiment_name}'
     FILE = dir + '/file.json'
     DATA = {}
@@ -100,17 +104,20 @@ def create_config_file(project_name:str, experiment_name:str,model_type:str, mod
     DATA = json.dumps(DATA)
     _ = open(FILE, mode='w+').write(DATA)
 
-
     with open(FILE) as file:
         result = json.load(file)
 
-    
-
-    #store FILE to db config path
+    add_path = crud.update_config(expno=expno, db=db, experiment_name = experiment_name,project_name = project_name )
     return "configured"
 
 @app.post("/experiments/config/step2/upload_model", status_code  = status.HTTP_202_ACCEPTED)
-async def upload_file1(project_name:str, experiment_name:str, uploaded_file: UploadFile = File(...)):
+async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
+    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
+    experiment_name = experiment_name.experiment_name
+
+    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
+    project_name = project_name.project_name
+
     file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(uploaded_file.file.read())
@@ -118,20 +125,29 @@ async def upload_file1(project_name:str, experiment_name:str, uploaded_file: Upl
 
 
 @app.post("/experiments/config/step2/upload_model.py")
-async def upload_file2(project_name:str, experiment_name:str, uploaded_file: UploadFile = File(...)):
+async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
+    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
+    experiment_name = experiment_name.experiment_name
+
+    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
+    project_name = project_name.project_name
     file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(uploaded_file.file.read())
-    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
+    return f"file '{uploaded_file.filename}' saved."
 
 @app.post("/experiments/config/step2/upload_data")
-async def upload_file3(project_name:str, experiment_name:str, uploaded_file: UploadFile = File(...)):
+async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
+    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
+    experiment_name = experiment_name.experiment_name
+
+    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
+    project_name = project_name.project_name
+
     file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(uploaded_file.file.read())
-    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
-
-
+    return f"file '{uploaded_file.filename}' saved."
 
 
 

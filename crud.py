@@ -44,4 +44,13 @@ def create_project_experiment(db: Session, experiment: schemas.ExperimentCreate,
 
 
 
+def update_config(db: Session, expno:int,project_name:str,experiment_name:str):   
+    dir = f'projects/{project_name}/{experiment_name}/file.json'
+    
+    item_to_update=db.query(models.Experiment).filter(models.Experiment.experiment_no==expno).first()
+    item_to_update.experiment_config_path = dir
+
+    db.commit()
+
+    return item_to_update
 
