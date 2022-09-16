@@ -78,7 +78,7 @@ def create_project(project: schemas.ProjectCreate, experiment: schemas.Experimen
     return pid
 
 
-@app.put("/experiments/config/step1")
+@app.put("/experiments/config/step1", status_code=status.HTTP_202_ACCEPTED)
 def create_config_file(project_id:int,expno:int,model_type:str, model_domain:str, db: Session = Depends(get_db)):
     #when do you update config to true
     experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == expno).first()
@@ -114,7 +114,7 @@ async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadF
         file_object.write(uploaded_file.file.read())
     return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
 
-@app.post("/experiments/config/step2/upload_model.py")
+@app.post("/experiments/config/step2/upload_model.py", status_code=status.HTTP_202_ACCEPTED)
 async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
     experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
     experiment_name = experiment_name.experiment_name
@@ -126,7 +126,7 @@ async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadF
         file_object.write(uploaded_file.file.read())
     return f"file '{uploaded_file.filename}' saved."
 
-@app.post("/experiments/config/step2/upload_data")
+@app.post("/experiments/config/step2/upload_data", status_code=status.HTTP_202_ACCEPTED)
 async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
     experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
     experiment_name = experiment_name.experiment_name
