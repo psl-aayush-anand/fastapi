@@ -11,25 +11,9 @@ import json
 
 from fastapi import File, UploadFile
 
-from fastapi.middleware.cors import CORSMiddleware
-
 models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
-
-
-origins = ["http://localhost:3000"]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-
 
 
 
@@ -67,7 +51,14 @@ def read_experiments(db: Session = Depends(get_db)):
 
 
 @app.post("/projects/{project_id}/experiments/",status_code=status.HTTP_201_CREATED, response_model=schemas.Experiment)
-def create_exp_under_project(project_id: int,experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
+def create_exp_under_project(project_id: int, experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
+    
+    db_exp = crud.get_exp_by_name(db, id=project_id, name=experiment.experiment_name)
+    
+    if db_exp:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"exp with name {experiment.experiment_name} already exists")
+    
+
     return crud.create_project_experiment(db=db, experiment=experiment, project_id=project_id)
 
 @app.post("/projects/", status_code=status.HTTP_201_CREATED)
@@ -122,7 +113,6 @@ async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadF
     with open(file_location, "wb+") as file_object:
         file_object.write(uploaded_file.file.read())
     return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
-
 
 @app.post("/experiments/config/step2/upload_model.py")
 async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
