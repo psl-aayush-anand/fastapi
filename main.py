@@ -15,7 +15,20 @@ models.Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 
+from fastapi.middleware.cors import CORSMiddleware
 
+
+
+origins = ['*']
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"]
+)
 
 # Dependency
 def get_db():
@@ -57,7 +70,6 @@ def create_exp_under_project(project_id: int, experiment: schemas.ExperimentCrea
     
     if db_exp:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"exp with name {experiment.experiment_name} already exists")
-    
 
     return crud.create_project_experiment(db=db, experiment=experiment, project_id=project_id)
 
@@ -79,66 +91,73 @@ def create_project(project: schemas.ProjectCreate, experiment: schemas.Experimen
 
 
 @app.put("/experiments/config/step1", status_code=status.HTTP_202_ACCEPTED)
-def create_config_file(project_id:int,expno:int,model_type:str, model_domain:str, db: Session = Depends(get_db)):
-    #when do you update config to true
-    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == expno).first()
-    experiment_name = experiment_name.experiment_name
+def create_config_file(expno:int ,model : schemas.CreateConfigFile, db: Session = Depends(get_db)):
+    
+    experiment = db.query(models.Experiment).filter(models.Experiment.experiment_no == expno).first()
+    experiment_name = experiment.experiment_name
 
-    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
+    project_name = db.query(models.Project).filter(models.Project.project_id == experiment.project_id).first()
     project_name = project_name.project_name
 
     dir = f'projects/{project_name}/{experiment_name}'
     FILE = dir + '/file.json'
-    DATA = {}
-    DATA["model type"] = model_type
-    DATA["model domain"] = model_domain
+
+    DATA = crud.create_config_file(db=db,model=model)
+
     DATA = json.dumps(DATA)
     _ = open(FILE, mode='w+').write(DATA)
 
     with open(FILE) as file:
         result = json.load(file)
 
-    add_path = crud.update_config(expno=expno, db=db, experiment_name = experiment_name,project_name = project_name )
+    
+
+    add_path = crud.update_config_path(expno=expno, db=db, dir=FILE )
     return "configured"
 
-@app.post("/experiments/config/step2/upload_model", status_code  = status.HTTP_202_ACCEPTED)
-async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
-    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
-    experiment_name = experiment_name.experiment_name
+@app.post("/experiments/config/step2/upload_file1", status_code  = status.HTTP_202_ACCEPTED)
+async def upload_file1(experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
+ return crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file)
 
-    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
-    project_name = project_name.project_name
+@app.post("/experiments/config/step2/upload_file2", status_code=status.HTTP_202_ACCEPTED)
+async def upload_file2(experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
+    return crud.save_file(db=db,experiment_no=experiment_no,uploaded_file=uploaded_file)
 
-    file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
-    with open(file_location, "wb+") as file_object:
-        file_object.write(uploaded_file.file.read())
-    return {"info": f"file '{uploaded_file.filename}' saved at '{file_location}'"}
+@app.post("/experiments/config/step2/upload_file3", status_code=status.HTTP_202_ACCEPTED)
+async def upload_file3(experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
+    return crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file)
 
-@app.post("/experiments/config/step2/upload_model.py", status_code=status.HTTP_202_ACCEPTED)
-async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
-    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
-    experiment_name = experiment_name.experiment_name
 
-    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
-    project_name = project_name.project_name
-    file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
-    with open(file_location, "wb+") as file_object:
-        file_object.write(uploaded_file.file.read())
-    return f"file '{uploaded_file.filename}' saved."
 
-@app.post("/experiments/config/step2/upload_data", status_code=status.HTTP_202_ACCEPTED)
-async def upload_file2(project_id:int, experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
-    experiment_name = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
-    experiment_name = experiment_name.experiment_name
+@app.put("/experiments/config/step3/", status_code=status.HTTP_200_OK)
+def generate_uuid(expno :int, db: Session = Depends(get_db)):
+    
+    exp_uuid = db.query(models.Experiment).filter(models.Experiment.experiment_no == expno).first()
+    exp_uuid = exp_uuid.uuid
 
-    project_name = db.query(models.Project).filter(models.Project.project_id == project_id).first()
-    project_name = project_name.project_name
+    config_path = crud.update_configuration(expno=expno, db=db)
 
-    file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
-    with open(file_location, "wb+") as file_object:
-        file_object.write(uploaded_file.file.read())
-    return f"file '{uploaded_file.filename}' saved."
+    return exp_uuid
 
+
+@app.delete("/experiments/delete_experiment/", status_code=status.HTTP_200_OK)
+def delete_experiment(exp_id: int, db:Session = Depends(get_db)):
+    db_exp = db.query(models.Experiment).get(exp_id)
+
+    if not db_exp:
+        raise HTTPException(status_code=404, detail="Experiment not found")
+
+    
+    return crud.delete_experiment(db=db, exp_id=exp_id)
+
+@app.delete("/projects/delete_project/", status_code=status.HTTP_200_OK)
+def delete_project(proj_id: int, db:Session = Depends(get_db)):
+    db_proj = db.query(models.Project).get(proj_id)
+
+    if not db_proj:
+        raise HTTPException(status_code=404, detail="Project not found")
+
+    return crud.delete_project(db=db, proj_id=proj_id)
 
 
 if __name__ =="__main__":

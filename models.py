@@ -2,6 +2,7 @@
 from email.policy import default
 from enum import unique
 import string
+from uuid import UUID
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -10,6 +11,9 @@ from database import Base
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
+from sqlalchemy.dialects.postgresql import UUID
+import uuid
+
 class Project(Base):
     __tablename__ = "projects"
 
@@ -17,7 +21,7 @@ class Project(Base):
     project_name = Column(String, unique=True, nullable=False, index=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
-    experiments = relationship("Experiment", back_populates="project")
+    experiments = relationship("Experiment", back_populates="project", cascade = "delete, merge, save-update")
 
 
 class Experiment(Base):
@@ -31,7 +35,9 @@ class Experiment(Base):
 
     experiment_config = Column(Boolean, default = False)
 
-    project_id = Column(Integer, ForeignKey("projects.project_id", ondelete="CASCADE"))
+    uuid = Column(UUID(as_uuid=True), default=uuid.uuid4, nullable = False, unique= True)
+
+    project_id = Column(Integer, ForeignKey("projects.project_id"), nullable=False)
 
     project = relationship("Project", back_populates="experiments")
 

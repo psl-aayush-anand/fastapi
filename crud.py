@@ -1,9 +1,12 @@
 from ast import And
+
 from sqlalchemy.orm import Session
 
 import models, schemas
 from models import Experiment
 import os
+from fastapi import File, UploadFile
+import shutil
 
 def get_projects(db: Session):
     return db.query(models.Project).all()
@@ -45,8 +48,7 @@ def create_project_experiment(db: Session, experiment: schemas.ExperimentCreate,
 
 
 
-def update_config(db: Session, expno:int,project_name:str,experiment_name:str):   
-    dir = f'projects/{project_name}/{experiment_name}/file.json'
+def update_config_path(db: Session, expno:int, dir:str):   
     
     item_to_update=db.query(models.Experiment).filter(models.Experiment.experiment_no==expno).first()
     item_to_update.experiment_config_path = dir
@@ -55,3 +57,59 @@ def update_config(db: Session, expno:int,project_name:str,experiment_name:str):
 
     return item_to_update
 
+def update_configuration(db: Session, expno:int):   
+    
+    config=db.query(models.Experiment).filter(models.Experiment.experiment_no==expno).first()
+    config.experiment_config = True
+
+    db.commit()
+
+    return config
+
+def delete_experiment( db: Session, exp_id: int):
+    obj = db.query(models.Experiment).filter(models.Experiment.experiment_no==exp_id).first()
+    
+    experiment_name = obj.experiment_name
+
+    project_name = db.query(models.Project).filter(models.Project.project_id == obj.project_id).first()
+    project_name = project_name.project_name
+    
+    db.delete(obj)
+    db.commit()
+
+    path = f'projects/{project_name}/{experiment_name}'
+    shutil.rmtree(path, ignore_errors=False, onerror=None)
+
+
+    return f"Experiment {obj.experiment_name} deleted"
+
+def delete_project( db: Session, proj_id: int):
+    obj = db.query(models.Project).filter(models.Project.project_id==proj_id).first()
+    project_name = obj.project_name
+
+    db.delete(obj)
+    db.commit()
+
+    path = f'projects/{project_name}'
+    shutil.rmtree(path, ignore_errors=False, onerror=None)
+    return f"Project {obj.project_name} deleted"
+
+def save_file(db : Session, experiment_no:int,uploaded_file:File(...)):
+    experiment = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
+    experiment_name = experiment.experiment_name
+
+    project_name = db.query(models.Project).filter(models.Project.project_id == experiment.project_id).first()
+    project_name = project_name.project_name
+
+    file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
+    with open(file_location, "wb+") as file_object:
+        file_object.write(uploaded_file.file.read())
+    return "file uploaded"
+
+def create_config_file(db:Session, model:schemas.CreateConfigFile):
+    model_type = model.model_type
+    experiment_domain = model.epxeriment_domain
+    DATA = {}
+    DATA["Model Type"] = model_type
+    DATA["Experiment Domain"] = experiment_domain
+    return DATA

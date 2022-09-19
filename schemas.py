@@ -1,3 +1,4 @@
+from distutils.command.config import config
 from sqlite3 import Timestamp
 from typing import List, Union
 
@@ -36,3 +37,13 @@ class Project(ProjectBase):
 
     class Config:
         orm_mode = True
+
+
+
+
+class ConfigBase(BaseModel):
+    model_type: str
+    epxeriment_domain: str
+
+class CreateConfigFile(ConfigBase):
+    pass
