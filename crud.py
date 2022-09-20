@@ -104,7 +104,7 @@ def save_file(db : Session, experiment_no:int,uploaded_file:File(...)):
     file_location = f"projects/{project_name}/{experiment_name}/{uploaded_file.filename}"
     with open(file_location, "wb+") as file_object:
         file_object.write(uploaded_file.file.read())
-    return "file uploaded"
+    return 
 
 def create_config_file(db:Session, model:schemas.CreateConfigFile):
     model_type = model.model_type

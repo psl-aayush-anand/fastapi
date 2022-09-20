@@ -117,7 +117,7 @@ def create_config_file(expno:int ,model : schemas.CreateConfigFile, db: Session 
 
 @app.post("/experiments/config/step2/upload_file1", status_code  = status.HTTP_202_ACCEPTED)
 async def upload_file1(experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
- return crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file)
+    return crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file)
 
 @app.post("/experiments/config/step2/upload_file2", status_code=status.HTTP_202_ACCEPTED)
 async def upload_file2(experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
@@ -127,7 +127,12 @@ async def upload_file2(experiment_no:int, uploaded_file: UploadFile = File(...),
 async def upload_file3(experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
     return crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file)
 
-
+@app.post("/experiments/uploads/", status_code=status.HTTP_202_ACCEPTED)
+async def upload_file3(experiment_no:int, uploaded_file1: UploadFile = File(...), uploaded_file2: UploadFile = File(...), uploaded_file3: UploadFile = File(...), db:Session = Depends(get_db)):
+    crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file1)
+    crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file2)
+    crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file3)
+    return 'files saved'
 
 @app.put("/experiments/config/step3/", status_code=status.HTTP_200_OK)
 def generate_uuid(expno :int, db: Session = Depends(get_db)):
@@ -158,6 +163,8 @@ def delete_project(proj_id: int, db:Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Project not found")
 
     return crud.delete_project(db=db, proj_id=proj_id)
+
+
 
 
 if __name__ =="__main__":
