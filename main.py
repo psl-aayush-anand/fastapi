@@ -127,8 +127,8 @@ async def upload_file2(experiment_no:int, uploaded_file: UploadFile = File(...),
 async def upload_file3(experiment_no:int, uploaded_file: UploadFile = File(...), db:Session = Depends(get_db)):
     return crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file)
 
-@app.post("/experiments/uploads/", status_code=status.HTTP_202_ACCEPTED)
-async def upload_file3(experiment_no:int, uploaded_file1: UploadFile = File(...), uploaded_file2: UploadFile = File(...), uploaded_file3: UploadFile = File(...), db:Session = Depends(get_db)):
+@app.post("/experiments/config/step2/upload_files/", status_code=status.HTTP_202_ACCEPTED)
+async def upload_files(experiment_no:int, uploaded_file1: UploadFile = File(...), uploaded_file2: UploadFile = File(...), uploaded_file3: UploadFile = File(...), db:Session = Depends(get_db)):
     crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file1)
     crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file2)
     crud.save_file(db=db,experiment_no=experiment_no, uploaded_file=uploaded_file3)
