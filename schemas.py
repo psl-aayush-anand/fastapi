@@ -4,6 +4,37 @@ from typing import List, Union
 
 from pydantic import BaseModel
 
+class RunConfigBase(BaseModel):
+    batch_size: int
+    field_1 :str
+    field_2:str
+    no_of_epoch: int
+
+
+class CreateRunConfigFile(RunConfigBase):
+    pass
+
+
+class RunCreate(RunConfigBase):
+    pass
+
+
+class RunBase(BaseModel):
+    run_name: str
+
+
+
+class RunCreate(RunBase):
+    pass
+
+
+class Run(RunBase):
+    run_no: int
+    experiment_no: int
+
+    class Config:
+        orm_mode = True
+
 
 class ExperimentBase(BaseModel):
     experiment_name: str
@@ -16,6 +47,7 @@ class ExperimentCreate(ExperimentBase):
 class Experiment(ExperimentBase):
     experiment_no: int
     project_id: int
+    runs: List[Run] = []
 
     class Config:
         orm_mode = True
@@ -47,33 +79,3 @@ class CreateConfigFile(ConfigBase):
     pass
 
 
-class RunConfigBase(BaseModel):
-    batch_size: int
-    field_1 :str
-    field_2:str
-    no_of_epoch: int
-
-
-class CreateRunConfigFile(RunConfigBase):
-    pass
-
-
-class RunCreate(RunConfigBase):
-    pass
-
-
-class RunBase(BaseModel):
-    run_name: str
-
-
-
-class RunCreate(RunBase):
-    pass
-
-
-class Run(RunBase):
-    experiment_no: int
-    run_no: int
-
-    class Config:
-        orm_mode = True
