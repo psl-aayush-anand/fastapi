@@ -16,7 +16,6 @@ class ExperimentCreate(ExperimentBase):
 class Experiment(ExperimentBase):
     experiment_no: int
     project_id: int
-    
 
     class Config:
         orm_mode = True
@@ -32,18 +31,49 @@ class ProjectCreate(ProjectBase):
 
 class Project(ProjectBase):
     project_id: int
-    
+
     experiments: List[Experiment] = []
 
     class Config:
         orm_mode = True
 
 
-
-
 class ConfigBase(BaseModel):
     model_type: str
     epxeriment_domain: str
 
+
 class CreateConfigFile(ConfigBase):
     pass
+
+
+class RunConfigBase(BaseModel):
+    batch_size: int
+    field_1 :str
+    field_2:str
+    no_of_epoch: int
+
+
+class CreateRunConfigFile(RunConfigBase):
+    pass
+
+
+class RunCreate(RunConfigBase):
+    pass
+
+
+class RunBase(BaseModel):
+    run_name: str
+
+
+
+class RunCreate(RunBase):
+    pass
+
+
+class Run(RunBase):
+    experiment_no: int
+    run_no: int
+
+    class Config:
+        orm_mode = True
