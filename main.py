@@ -247,10 +247,8 @@ def read_runs(db: Session = Depends(get_db)):
 
 
 @app.post("/projects/experiments/{experiment_no}/runs", status_code=status.HTTP_201_CREATED, response_model=schemas.Run)
-def create_run_under_experiment(experiment_no: int, run: schemas.RunCreate, db: Session = Depends(get_db)):
-    
-    return crud.create_run(db=db, run=run, experiment_no=experiment_no)
-
+def create_run_under_experiment(experiment_no: int, run : schemas.RunCreate, db: Session = Depends(get_db)):
+    return crud.create_run(db=db, experiment_no=experiment_no, run=run)
 
 
 @app.get("/runs/get_config/")

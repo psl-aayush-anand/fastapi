@@ -138,8 +138,6 @@ def create_config_file(db: Session, model: schemas.CreateConfigFile, project_nam
     return DATA
 
 
-
-
 def get_runs(db: Session):
     return db.query(models.Run).all()
 
@@ -147,6 +145,9 @@ def get_runs(db: Session):
 def create_run(db: Session, run: schemas.RunCreate, experiment_no: int):
 
     db_run = models.Run(**run.dict(), experiment_no=experiment_no)
+    num = db.query(models.Run).filter(models.Run.experiment_no ==experiment_no ).count()
+
+    db_run.run_name = f'run{num+1}'
     db.add(db_run)
     db.commit()
     db.refresh(db_run)

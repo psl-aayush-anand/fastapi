@@ -20,17 +20,17 @@ class RunCreate(RunConfigBase):
 
 
 class RunBase(BaseModel):
-    run_name: str
+    pass
 
 
-
-class RunCreate(RunBase):
+class RunCreate(BaseModel):
     pass
 
 
 class Run(RunBase):
     run_no: int
     experiment_no: int
+    run_name:str
 
     class Config:
         orm_mode = True
