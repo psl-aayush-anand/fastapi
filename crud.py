@@ -138,13 +138,59 @@ def create_config_file(db: Session, model: schemas.CreateConfigFile, project_nam
     return DATA
 
 
-def update_run_config(db: Session, expno: int, run_no: int):
+def get_runs(db: Session):
+    return db.query(models.Run).all()
+
+
+def create_run(db: Session, run: schemas.RunCreate, experiment_no: int):
+
+    db_run = models.Run(**run.dict(), experiment_no=experiment_no)
+    num = db.query(models.Run).filter(models.Run.experiment_no ==experiment_no ).count()
+
+    db_run.run_name = f'run{num+1}'
+    db.add(db_run)
+    db.commit()
+    db.refresh(db_run)
+    
+    runname = db_run.run_name
+
+    exp = db.query(models.Experiment).filter(models.Experiment.experiment_no == experiment_no).first()
+    
+    expname = exp.experiment_name
+    project_id = exp.project_id
+
+    projname = db.query(models.Project).filter(
+        models.Project.project_id == project_id).first()
+    projname = projname.project_name
+
+
+    os.mkdir(f'projects/{projname}/{expname}/{runname}')
+
+    return db_run
+
+def update_run_config(db: Session, run_no: int):
 
     config = db.query(models.Run).filter(
         models.Run.run_no == run_no).first()
     config.config_value = True
 
     db.commit()
+     
+    return 'configured'
+
+
+def create_run_config_file(db: Session, model: schemas.CreateRunConfigFile):
+    no_of_epoch = model.no_of_epoch
+    batch_size = model.batch_size
+    field_1 = model.field_1
+    field_2 = model.field_2
+
+    DATA = {}
+    DATA["number of epoch"] = no_of_epoch
+    DATA["Batch Size"] = batch_size
+    DATA["Field 1"] = field_1
+    DATA["Field 2"] = field_2
+    return DATA
 
 
 def update_run_config_path(db: Session, run_no: int, dir: str):
@@ -156,21 +202,3 @@ def update_run_config_path(db: Session, run_no: int, dir: str):
     db.commit()
 
     return item_to_update
-
-
-def create_run_config_file(db: Session, model: schemas.CreateRunConfigFile):
-    e = model.epoch
-    # experiment_domain = model.epxeriment_domain
-    # experiment_name = experiment_name
-    # project_name = project_name
-
-    DATA = {}
-    DATA["epoch"] = e
-    # DATA["Experiment Domain"] = experiment_domain
-    # DATA["Experiment name"] = experiment_name
-    # DATA["Project Name"] = project_name
-    return DATA
-
-
-def get_runs(db: Session):
-    return db.query(models.Run).all()

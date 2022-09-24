@@ -86,7 +86,7 @@ def create_project(project: schemas.ProjectCreate, experiment: schemas.Experimen
 
     if db_project:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                            detail=f"project with name {project.project_name} already exists")
+            detail=f"project with name {project.project_name} already exists")
 
     proj = crud.create_project(db=db, project=project)
     projname = proj.project_name
@@ -127,19 +127,19 @@ def create_config_file(expno: int, model: schemas.CreateConfigFile, db: Session 
     return "configured"
 
 
-@app.post("/experiments/config/step2/upload_file1", status_code=status.HTTP_202_ACCEPTED)
-async def upload_file1(experiment_no: int, uploaded_file: UploadFile = File(...), db: Session = Depends(get_db)):
-    return crud.save_file(db=db, experiment_no=experiment_no, uploaded_file=uploaded_file)
+# @app.post("/experiments/config/step2/upload_file1", status_code=status.HTTP_202_ACCEPTED)
+# async def upload_file1(experiment_no: int, uploaded_file: UploadFile = File(...), db: Session = Depends(get_db)):
+#     return crud.save_file(db=db, experiment_no=experiment_no, uploaded_file=uploaded_file)
 
 
-@app.post("/experiments/config/step2/upload_file2", status_code=status.HTTP_202_ACCEPTED)
-async def upload_file2(experiment_no: int, uploaded_file: UploadFile = File(...), db: Session = Depends(get_db)):
-    return crud.save_file(db=db, experiment_no=experiment_no, uploaded_file=uploaded_file)
+# @app.post("/experiments/config/step2/upload_file2", status_code=status.HTTP_202_ACCEPTED)
+# async def upload_file2(experiment_no: int, uploaded_file: UploadFile = File(...), db: Session = Depends(get_db)):
+#     return crud.save_file(db=db, experiment_no=experiment_no, uploaded_file=uploaded_file)
 
 
-@app.post("/experiments/config/step2/upload_file3", status_code=status.HTTP_202_ACCEPTED)
-async def upload_file3(experiment_no: int, uploaded_file: UploadFile = File(...), db: Session = Depends(get_db)):
-    return crud.save_file(db=db, experiment_no=experiment_no, uploaded_file=uploaded_file)
+# @app.post("/experiments/config/step2/upload_file3", status_code=status.HTTP_202_ACCEPTED)
+# async def upload_file3(experiment_no: int, uploaded_file: UploadFile = File(...), db: Session = Depends(get_db)):
+#     return crud.save_file(db=db, experiment_no=experiment_no, uploaded_file=uploaded_file)
 
 
 # @app.post("/experiments/uploads/", status_code=status.HTTP_202_ACCEPTED)
@@ -194,7 +194,7 @@ async def create_upload_files(experiment_no: int, files: List[UploadFile] = File
     #                 expno=experiment_no, db=db)
 
     # return {"Result": "OK", "filenames": [file.filename for file in files], 'uuid': exp_uuid}
-    return {"Result": "OK", "filenames": [file.filename for file in files]}
+        return {"Result": "OK", "filenames": [file.filename for file in files]}
 
 
 @app.put("/experiments/config/step3/", status_code=status.HTTP_200_OK)
@@ -241,14 +241,44 @@ def check_config_value(experiment_no: int, db: Session = Depends(get_db)):
     return exp_config_value
 
 
+@app.get("/runs/", response_model=List[schemas.Run])
+def read_runs(db: Session = Depends(get_db)):
+    run = crud.get_runs(db)
+    return run
+
+
+
+@app.post("/projects/experiments/{experiment_no}/runs", status_code=status.HTTP_201_CREATED, response_model=schemas.Run)
+def create_run_under_experiment(experiment_no: int, run : schemas.RunCreate, db: Session = Depends(get_db)):
+    return crud.create_run(db=db, experiment_no=experiment_no, run=run)
+
+
+@app.get("/runs/get_config/")
+def check_run_config_value(run_no: int, db: Session = Depends(get_db)):
+
+    run_config_value = db.query(models.Run).filter(
+        models.Run.run_no == run_no).first()
+
+    run_config_value = run_config_value.config_value
+    return run_config_value
+
+
+
+@app.put("/runs/config/step2/", status_code=status.HTTP_200_OK)
+def update_run_config_value(run_no:int, db: Session = Depends(get_db)):
+
+    return crud.update_run_config(run_no=run_no, db=db)
+
+
+
 @app.put("/runs/config/step1/", status_code=status.HTTP_202_ACCEPTED)
-def create_config_file(expno: int, run_no: int, model: schemas.CreateConfigFile, db: Session = Depends(get_db)):
+def create_config_file(run_no: int, model: schemas.CreateRunConfigFile, db: Session = Depends(get_db)):
     run = db.query(models.Run).filter(
-        models.Run.run_no == run.run_no).first()
+        models.Run.run_no == run_no).first()
     run_name = run.run_name
 
     experiment = db.query(models.Experiment).filter(
-        models.Experiment.experiment_no == expno).first()
+        models.Experiment.experiment_no == run.experiment_no).first()
     experiment_name = experiment.experiment_name
 
     project_name = db.query(models.Project).filter(
@@ -269,30 +299,9 @@ def create_config_file(expno: int, run_no: int, model: schemas.CreateConfigFile,
 
     add_path = crud.update_run_config_path(
         run_no=run_no, db=db, dir=FILE)
-    return "configured"
+    return "saved"
 
 
-@app.put("/runs/config/step2/", status_code=status.HTTP_200_OK)
-def generate_uuid(expno: int, run_no=int, db: Session = Depends(get_db)):
 
-    return crud.update_run_config(expno=expno, run_no=run_no, db=db)
-
-
-@app.get("/runs/", response_model=List[schemas.Run])
-def read_runs(db: Session = Depends(get_db)):
-    run = crud.get_runs(db)
-    return run
-
-# create runs
-
-
-@app.post("/projects/{project_id}/experiments/{experiment_no}/runs", status_code=status.HTTP_201_CREATED, response_model=schemas.Experiment)
-# def create_exp_under_project(project_id: int, experiment: schemas.ExperimentCreate, db: Session = Depends(get_db)):
-#     db_exp = crud.get_exp_by_name(
-#         db, id=project_id, name=experiment.experiment_name)
-#     if db_exp:
-#         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-#                             detail=f"exp with name {experiment.experiment_name} already exists")
-#     return crud.create_project_experiment(db=db, experiment=experiment, project_id=project_id)
 if __name__ == "__main__":
     uvicorn.run(app, host="localhost", port=8000)

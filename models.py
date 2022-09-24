@@ -47,6 +47,9 @@ class Experiment(Base):
 
     project = relationship("Project", back_populates="experiments")
 
+    runs = relationship(
+        "Run", back_populates="experimentrun", cascade="delete, merge, save-update")
+
 
 class Run(Base):
     __tablename__ = "runs"
@@ -57,3 +60,5 @@ class Run(Base):
 
     config_value = Column(Boolean, default=False)
     run_config_path = Column(String)
+
+    experimentrun = relationship("Experiment", back_populates="runs")
